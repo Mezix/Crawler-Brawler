@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: fcb7e739a696d60498f545c14a340f3c
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontNames:
+  - ImprovGOLD
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 00062814b4a62514ca3ed20d109a0c34, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

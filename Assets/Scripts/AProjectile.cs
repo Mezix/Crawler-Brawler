@@ -61,7 +61,14 @@ public abstract class AProjectile : MonoBehaviour
         ProjectileSpeed = 15;
         Damage = 3;
         HitPlayer = false;
-        if (!HitPlayer) Physics2D.IgnoreCollision(_projectileCollider, REF._PCon._playerCol);
+        if (!HitPlayer)
+        {
+            foreach(PlayerController2D pcon in REF._PCons)
+            {
+                if (!pcon) continue;
+                Physics2D.IgnoreCollision(_projectileCollider, pcon._playerCol);
+            }
+        }
         if (_trailRenderer) _trailRenderer.Clear();
     }
     protected void DespawnBullet()
