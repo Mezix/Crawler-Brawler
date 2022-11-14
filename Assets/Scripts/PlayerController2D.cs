@@ -24,12 +24,12 @@ public class PlayerController2D : NetworkBehaviour
         REF._PCons.Add(this);
         _playerRB = GetComponentInChildren<Rigidbody2D>();
         _playerCol = GetComponentInChildren<Collider2D>();
-        SetCharacter();
     }
 
     public override void OnNetworkSpawn()
     {
-        if (!IsOwner) ThisCharacterIsNotMyPlayerCharacter();
+        if (IsOwner) SetCharacter();
+        else ThisCharacterIsNotMyPlayerCharacter(); 
         base.OnNetworkSpawn();
     }
 
@@ -37,7 +37,6 @@ public class PlayerController2D : NetworkBehaviour
     {
         this.enabled = false;
         _pUI.enabled = false;
-        //disable player UI scripts as well
     }
 
     private void Start()

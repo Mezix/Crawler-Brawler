@@ -3,23 +3,27 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Netcode;
 
 public class MainMenuUI : MonoBehaviour
 {
     public Button _launchGameButton;
     public Button _quitGameButton;
 
-    [Header ("Hosting")]
-    public Button _nextHostMode;
-    public Button _previousHostMode;
+    [Header ("Create Lobby")]
     public Text _hostModeText;
+    public Button _hostLobby;
+    public Button _joinLobby;
 
     [Header("Character Selection")]
     public List<Sprite> _characterSprites;
     public Text _charName;
+    public static NetworkVariable<int> CharIndex;
     public Image _characterImage;
     public Button _nextCharacterButton;
     public Button _previousCharacterButton;
+
+    public RelayManager _relayManager;
     private void Awake()
     {
         REF.HostMode = 0;
@@ -42,8 +46,8 @@ public class MainMenuUI : MonoBehaviour
         _launchGameButton.onClick.AddListener(() => LaunchGame());
         _quitGameButton.onClick.AddListener(() => QuitGame());
 
-        _nextHostMode.onClick.AddListener(() => NextHostMode());
-        _previousHostMode.onClick.AddListener(() => PreviousHostMode());
+        _hostLobby.onClick.AddListener(() => HostLobby());
+        _joinLobby.onClick.AddListener(() => JoinLobby());
 
         _nextCharacterButton.onClick.AddListener(() => NextCharacter());
         _previousCharacterButton.onClick.AddListener(() => PreviousCharacter());
@@ -52,7 +56,8 @@ public class MainMenuUI : MonoBehaviour
 
     private void LaunchGame()
     {
-        Loader.Load(Loader.Scene.GameScene);
+        _relayManager.CreateGame();
+        //Loader.Load(Loader.Scene.GameScene);
     }
 
     private void QuitGame()
@@ -89,13 +94,13 @@ public class MainMenuUI : MonoBehaviour
 
     //  Host Mode
 
-    private void PreviousHostMode()
+    private void JoinLobby()
     {
         REF.HostMode--;
         if (REF.HostMode < 0) REF.HostMode = 2;
         SelectHostMode();
     }
-    private void NextHostMode()
+    private void HostLobby()
     {
         REF.HostMode++;
         if (REF.HostMode > 2) REF.HostMode = 0;
