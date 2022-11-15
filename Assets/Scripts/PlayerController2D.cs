@@ -28,6 +28,7 @@ public class PlayerController2D : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        if (REF.CurrentScene == Loader.Scene.MenuScene) Destroy(gameObject);
         if (IsOwner) SetCharacter();
         else ThisCharacterIsNotMyPlayerCharacter(); 
         base.OnNetworkSpawn();

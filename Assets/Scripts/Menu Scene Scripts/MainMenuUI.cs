@@ -31,7 +31,7 @@ public class MainMenuUI : NetworkBehaviour
     public GameObject _lobbyParent;
     public Button _launchGameButton;
     public VerticalLayoutGroup _vLayoutGroup;
-    private List<LobbyPlayer> lobbyPlayers = new List<LobbyPlayer>();
+    public List<LobbyPlayer> lobbyPlayers = new List<LobbyPlayer>();
 
     [Header("Character Selection")]
     public List<Sprite> _characterSprites;
@@ -41,22 +41,26 @@ public class MainMenuUI : NetworkBehaviour
     public Button _nextCharacterButton;
     public Button _previousCharacterButton;
 
+    [Header("MISC")]
     public RelayManager _relayManager;
+
     private void Awake()
     {
+        REF.CurrentScene = Loader.Scene.MenuScene;
         REF.HostMode = 0;
         REF.CharIndex = 0;
-        SelectCharacter();
     }
     void Start()
     {
         InitPlayerName();
         TrySaveName();
-        CreateLobbyPlayers();
+        InitLobbyPlayers();
         ShowLobbyCreationScreen(false);
         ShowLobby(false);
         ShowJoinLobby(false);
         InitButtons();
+        _attemptJoinLobby.interactable = false;
+        SelectCharacter();
     }
     void Update()
     {
@@ -82,7 +86,7 @@ public class MainMenuUI : NetworkBehaviour
         _hostLobby.onClick.AddListener(() => HostLobby());
         _joinLobby.onClick.AddListener(() => ShowJoinLobby(true));
         _playerNameInputField.onValueChanged.AddListener(delegate { TrySaveName(); });
-
+        _codeInputField.onValueChanged.AddListener(delegate { InputCodeChanged(); });
         _attemptJoinLobby.onClick.AddListener(() => TryJoinLobbyWithCode());
 
         _nextCharacterButton.onClick.AddListener(() => NextCharacter());
@@ -91,11 +95,18 @@ public class MainMenuUI : NetworkBehaviour
         _launchGameButton.onClick.AddListener(() => LaunchGame());
     }
 
+    private void InputCodeChanged()
+    {
+        _codeInputField.SetTextWithoutNotify(_codeInputField.text.ToUpper());
+        if (_codeInputField.text.Length == 6) _attemptJoinLobby.interactable = true;
+        else _attemptJoinLobby.interactable = false;
+    }
+
     private void EscapeBehaviour()
     {
         if (_lobbyOn)
         {
-            ShowLobby(false);
+            LeaveLobby();
             return;
         }
         if (_joinLobbyOn)
@@ -108,6 +119,12 @@ public class MainMenuUI : NetworkBehaviour
             ShowLobbyCreationScreen(false);
             return;
         }
+    }
+
+    private void LeaveLobby()
+    {
+        _relayManager.StopGame();
+        ShowLobby(false);
     }
 
     //  Character
@@ -167,7 +184,8 @@ public class MainMenuUI : NetworkBehaviour
     {
         REF.HostMode = 0;
         ClearLobby();
-        lobbyPlayers[0].AddPlayer(_playerNameInputField.text, "100ms");
+        //lobbyPlayers[0].AddPlayer(_playerNameInputField.text, "100ms");
+        lobbyPlayers[0].LobbyPlayerChangedServerRPC(false, _playerNameInputField.text, "100ms", true);
         _relayManager.CreateGame();
         ShowLobby(true);
     }
@@ -175,6 +193,23 @@ public class MainMenuUI : NetworkBehaviour
     {
         REF.HostMode = 1;
         _relayManager.JoinGame(_codeInputField.text);
+
+        //  Check availabilty
+        int joinSlot = -1;
+        for(int i = 0; i < lobbyPlayers.Count; i++)
+        {
+            if(!lobbyPlayers[i]._occupied)
+            {
+                joinSlot = i;
+                break;
+            }
+        }
+        if(joinSlot >= 0)
+        {
+            ShowLobby(true);
+            //lobbyPlayers[joinSlot].AddPlayer(_playerNameInputField.text, "100ms");
+            lobbyPlayers[joinSlot].LobbyPlayerChangedServerRPC(false, _playerNameInputField.text, "100ms", true);
+        }
     }
 
     //  Lobby Screen
@@ -186,14 +221,16 @@ public class MainMenuUI : NetworkBehaviour
             p.Reset();
         }
     }
-    private void CreateLobbyPlayers()
+    private void InitLobbyPlayers()
     {
         for (int i = 0; i < 4; i++)
         {
-            LobbyPlayer player = Instantiate(Resources.Load("Prefabs/LobbyPlayer", typeof(LobbyPlayer)) as LobbyPlayer);
-            player.transform.SetParent(_vLayoutGroup.transform, false);
-            player.Reset();
-            lobbyPlayers.Add(player);
+            lobbyPlayers[i].Reset();
+            // LobbyPlayer player = Instantiate(Resources.Load("Prefabs/LobbyPlayer", typeof(LobbyPlayer)) as LobbyPlayer);
+            // GameObject go = Instantiate((GameObject) Resources.Load("Prefabs/LobbyPlayer"));
+            //LobbyPlayer p = go.GetComponentInChildren<LobbyPlayer>();
+            //p.transform.SetParent(_vLayoutGroup.transform, false);
+            //lobbyPlayers.Add(p);
         }
     }
     public override void OnNetworkSpawn()
@@ -216,6 +253,9 @@ public class MainMenuUI : NetworkBehaviour
     }
     private void CheckLaunchPossible()
     {
+        //  if we are the client, dont allow us to launch the game
+        if (NetworkManager.Singleton.IsClient) { _launchGameButton.interactable = false; return; }
+
         int OccupyCount = 0;
         int ReadyCount = 0;
         foreach(LobbyPlayer p in lobbyPlayers)

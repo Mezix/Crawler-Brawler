@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Netcode;
 
 public class LobbyPlayer : MonoBehaviour
 {
@@ -29,10 +30,27 @@ public class LobbyPlayer : MonoBehaviour
         _toggle.SetIsOnWithoutNotify(false);
         _name.text = name;
         _ping.text = ping;
-        _occupied = true;
+        _occupied = false;
     }
     private void PlayerIsReady(bool on)
     {
         Debug.Log(_name.text + " : Ready : " +  on);
+    }
+
+    [ServerRpc]
+    public void LobbyPlayerChangedServerRPC(bool toggleState, string name, string ping, bool occupied)
+    {
+        LobbyPlayerChangedClientRPC(toggleState, name, ping, occupied);
+    }
+
+    [ClientRpc]
+    private void LobbyPlayerChangedClientRPC(bool toggleState, string name, string ping, bool occupied)
+    {
+        _toggle.isOn = toggleState;
+        _name.text = name;
+        _ping.text = ping;
+        _occupied = occupied;
+
+        print(this.name);
     }
 }

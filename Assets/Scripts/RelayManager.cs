@@ -9,6 +9,8 @@ using Unity.Services.Core;
 using Unity.Services.Authentication;
 using Unity.Services.Relay.Models;
 using Unity.Services.Relay;
+using System;
+using System.IO;
 
 public class RelayManager : MonoBehaviour
 {
@@ -29,10 +31,12 @@ public class RelayManager : MonoBehaviour
         _mainMenu._lobbyCode.text = await RelayService.Instance.GetJoinCodeAsync(a.AllocationId);
 
         _transport.SetHostRelayData(a.RelayServer.IpV4, (ushort)a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData);
-
         NetworkManager.Singleton.StartHost();
     }
-
+    public void StopGame()
+    {
+        NetworkManager.Singleton.Shutdown();
+    }
     public async void JoinGame(string joinCode)
     {
         JoinAllocation a;
@@ -40,7 +44,7 @@ public class RelayManager : MonoBehaviour
         {
             a = await RelayService.Instance.JoinAllocationAsync(joinCode);
         }
-        catch(UnassignedReferenceException)
+        catch(RelayServiceException)
         {
             Debug.Log("INVALID JOIN CODE");
             return;
@@ -48,5 +52,6 @@ public class RelayManager : MonoBehaviour
         _transport.SetClientRelayData(a.RelayServer.IpV4, (ushort) a.RelayServer.Port, a.AllocationIdBytes, a.Key, a.ConnectionData, a.HostConnectionData);
 
         NetworkManager.Singleton.StartClient();
+        return ;
     }
 }
