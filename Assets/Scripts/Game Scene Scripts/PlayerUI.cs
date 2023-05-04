@@ -9,8 +9,15 @@ public class PlayerUI : MonoBehaviour
     public GameObject _menuParent;
     public bool _menuOn;
 
+    [Header("Damage Indicators")]
     public Button _returnToMainMenuButton;
+    public Button _settingsButton;
     public Button _quitGameButton;
+
+    [Header("Settings")]
+    public bool _settingsOn;
+    public GameObject _settingsParent;
+
     private void Awake()
     {
         InitButtons();

@@ -8,10 +8,18 @@ public class PlayerController2D : NetworkBehaviour
 {
     //  Movement
     private float horizontalInput, verticalInput;
-    private float moveSpeed;
+    private Vector3 moveVector;
+    private float maxSpeed;
+    private float currentSpeed;
 
     [HideInInspector] public Rigidbody2D _playerRB;
     [HideInInspector] public Collider2D _playerCol;
+
+    //  Animation
+    [HideInInspector] public Animator _playerAnim;
+    public readonly string _speedParameter = "Speed";
+    public readonly string _horizontalParameter = "Horizontal";
+    public readonly string _verticalParameter = "Vertical";
 
     public Transform _armTransform;
     public Transform _weaponProjectileSpot;
@@ -21,13 +29,14 @@ public class PlayerController2D : NetworkBehaviour
     public bool _controllerOn;
     public PlayerUI _pUI;
     private PlayerControls _controls;
-    private Vector2 moveVec;
+    private Vector2 controllerMoveInputVector;
     public GameObject _controllerCrosshair;
     private void Awake()
     {
         REF._PCons.Add(this);
         _playerRB = GetComponentInChildren<Rigidbody2D>();
         _playerCol = GetComponentInChildren<Collider2D>();
+        _playerAnim = GetComponentInChildren<Animator>();
 
         //  InitControls
 
@@ -35,8 +44,8 @@ public class PlayerController2D : NetworkBehaviour
         _controls.Gameplay.LightAttack.performed += ctx => { if (_controllerOn) LightAttack(); };
         _controls.Gameplay.HeavyAttack.performed += ctx => { if (_controllerOn) HeavyAttack(); };
 
-        _controls.Gameplay.Move.performed += ctx => moveVec = ctx.ReadValue<Vector2>();
-        _controls.Gameplay.Move.canceled += ctx => moveVec = Vector2.zero;
+        _controls.Gameplay.Move.performed += ctx => controllerMoveInputVector = ctx.ReadValue<Vector2>();
+        _controls.Gameplay.Move.canceled += ctx => controllerMoveInputVector = Vector2.zero;
 
         _controls.Gameplay.Aim.performed += ctx => ControllerAim(ctx.ReadValue<Vector2>(), true);
         _controls.Gameplay.Aim.canceled += ctx => ControllerAim(Vector2.zero, false); 
@@ -48,7 +57,7 @@ public class PlayerController2D : NetworkBehaviour
     }
     private void Start()
     {
-        moveSpeed = 0.1f;
+        maxSpeed = 0.1f;
     }
     private void Update()
     {
@@ -57,8 +66,8 @@ public class PlayerController2D : NetworkBehaviour
 
         if(_controllerOn)
         {
-            horizontalInput = moveVec.x;
-            verticalInput = moveVec.y;
+            horizontalInput = controllerMoveInputVector.x;
+            verticalInput = controllerMoveInputVector.y;
         }
         else
         {
@@ -133,7 +142,13 @@ public class PlayerController2D : NetworkBehaviour
 
     private void HandleMovement()
     {
-        _playerRB.MovePosition(transform.position + horizontalInput * moveSpeed * Vector3.right + verticalInput * moveSpeed * Vector3.up);
+        moveVector = horizontalInput * maxSpeed * Vector3.right + verticalInput * maxSpeed * Vector3.up;
+        currentSpeed = Vector3.Magnitude(moveVector);
+        _playerRB.MovePosition(transform.position + moveVector);
+        
+        _playerAnim.SetFloat(_speedParameter, currentSpeed);
+        _playerAnim.SetFloat(_horizontalParameter, horizontalInput);
+        _playerAnim.SetFloat(_verticalParameter, verticalInput);
     }
 
     //  Controller
