@@ -58,6 +58,7 @@ public class PlayerController2D : NetworkBehaviour
     private void Start()
     {
         maxSpeed = 0.1f;
+        REF.cam.SetObjectToTrack(transform);
     }
     private void Update()
     {

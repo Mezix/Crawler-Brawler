@@ -5,6 +5,8 @@ using UnityEngine;
 public static class REF
 {
     public static Loader.Scene CurrentScene;
+    public static CameraScript cam;
+
     /// <summary>
     ///  0 = host, 1 = Server, 2 = Client
     /// </summary>
