@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -9,6 +10,16 @@ using UnityEngine.Networking;
 public class CustomNetworkManager : NetworkManager
 {
     public bool gameStarted = false;
+
+    private void Start()
+    {
+        InitNetworkPrefabs();
+    }
+
+    private void InitNetworkPrefabs()
+    {
+        Singleton.AddNetworkPrefab((GameObject) Resources.Load(GS.Prefabs("PhysicsObject")));
+    }
 
     private void OnGUI()
     {
