@@ -5,7 +5,8 @@ using UnityEngine;
 public static class REF
 {
     public static Loader.Scene CurrentScene;
-    public static CameraScript cam;
+    public static CameraScript MainCam;
+    public static ProjectilePool PP;
 
     /// <summary>
     ///  0 = host, 1 = Server, 2 = Client

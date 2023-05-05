@@ -37,7 +37,7 @@ public class DamagePrefabScript : MonoBehaviour
             _currentEnemy._damagePrefab = null;
             _currentEnemy = null;
             _damage = 0;
-            ProjectilePool.Instance.AddToPool(gameObject);
+            REF.PP.AddToPool(gameObject);
         }
     }
 

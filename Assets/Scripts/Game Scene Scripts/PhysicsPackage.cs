@@ -46,6 +46,6 @@ public class PhysicsPackage : MonoBehaviour, Punchable
     }
     public void DestroyPackage()
     {
-        ProjectilePool.Instance.AddToPool(gameObject);
+       REF.PP.AddToPool(gameObject);
     }
 }

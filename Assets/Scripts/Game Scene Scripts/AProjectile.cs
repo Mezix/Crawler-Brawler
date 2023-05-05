@@ -74,7 +74,7 @@ public abstract class AProjectile : MonoBehaviour
     protected void DespawnBullet()
     {
         _trailRenderer.Clear();
-        ProjectilePool.Instance.AddToPool(gameObject);
+        REF.PP.AddToPool(gameObject);
     }
     public virtual IEnumerator DespawnAnimation()
     {

@@ -29,7 +29,7 @@ public abstract class AEnemy : MonoBehaviour
 
         if (!_damagePrefab)
         {
-            GameObject g = ProjectilePool.Instance.GetProjectileFromPool("DamageText");
+            GameObject g = REF.PP.GetProjectileFromPool("DamageText");
             _damagePrefab = g.GetComponent<DamagePrefabScript>();
         }
         _damagePrefab.InitDamage(_damagePrefab._damage += damage, this);

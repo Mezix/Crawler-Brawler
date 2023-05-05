@@ -14,24 +14,37 @@ public class ProjectilePool : MonoBehaviour
     private List<GameObject> projectilePool; //where all our different bullets are stored
 
     public List<ObjectPoolItem> _projectilesToPool; //the list of all our bullets we need to instantiate and keep track of
-    public static ProjectilePool Instance { get; private set; } //the reference to the pool itself
 
     private void Awake()
     {
-        Instance = this; //set the reference to ourselves
+        REF.PP = this; //set the reference to ourselves
     }
     void Start()
     {
+        DontDestroyOnLoad(gameObject);
+
+        //StartCoroutine(InitProjectiles());
+
+        CustomNetworkManager.Singleton.OnServerStarted += InitProjectiles;
+    }
+    private void InitProjectiles()
+    {
+        //yield return new WaitWhile(() => !CustomNetworkManager.Singleton.IsListening);
+
         projectilePool = new List<GameObject>(); //init the list
-        foreach(ObjectPoolItem item in _projectilesToPool) //at the start of the game make sure we create a few of each projectile
+        foreach (ObjectPoolItem item in _projectilesToPool) //at the start of the game make sure we create a few of each projectile
         {
+            CustomNetworkManager.Singleton.AddNetworkPrefab(item._projectilePrefab);
             GrowBulletPool(item._projectilePrefab);
         }
+        Debug.Log("Projectiles Initialized");
     }
+
     private void GrowBulletPool(GameObject bulletPrefab)
     {
         for (int i = 0; i < 10; i++)
         {
+           // CustomNetworkManager.Singleton.OnServerStarted
             var bullet = Instantiate(bulletPrefab); //create a bullet of this kind
             //bullet.transform.SetParent(transform); //add all the created bullets to the pool so they aren't loose in the scene
             AddToPool(bullet);

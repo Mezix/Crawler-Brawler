@@ -16,7 +16,7 @@ public class CameraScript : MonoBehaviour
 
     private void Awake()
     {
-        REF.cam = this;
+        REF.MainCam = this;
         isMovingToPos = false;
     }
     private void Start()

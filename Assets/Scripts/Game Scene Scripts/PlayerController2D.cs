@@ -58,7 +58,7 @@ public class PlayerController2D : NetworkBehaviour
     private void Start()
     {
         maxSpeed = 0.1f;
-        REF.cam.SetObjectToTrack(transform);
+        REF.MainCam.SetObjectToTrack(transform);
     }
     private void Update()
     {
@@ -123,12 +123,12 @@ public class PlayerController2D : NetworkBehaviour
 
     private void LightAttack()
     {
-        GameObject p = ProjectilePool.Instance.GetProjectileFromPool("DefaultProjectile");
+        GameObject p = REF.PP.GetProjectileFromPool("DefaultProjectile");
         p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
     }
     private void HeavyAttack()
     {
-        GameObject p = ProjectilePool.Instance.GetProjectileFromPool("DefaultProjectile");
+        GameObject p = REF.PP.GetProjectileFromPool("DefaultProjectile");
         p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
     }
 
