@@ -123,12 +123,12 @@ public class PlayerController2D : NetworkBehaviour
 
     private void LightAttack()
     {
-        GameObject p = REF.PP.GetProjectileFromPool("DefaultProjectile");
+        GameObject p = REF.ObjPool.GetNetworkObjectFromPool("DefaultProjectile").gameObject;
         p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
     }
     private void HeavyAttack()
     {
-        GameObject p = REF.PP.GetProjectileFromPool("DefaultProjectile");
+        GameObject p = REF.ObjPool.GetNetworkObjectFromPool("DefaultProjectile").gameObject;
         p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
     }
 

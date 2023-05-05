@@ -2,16 +2,22 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 using UnityEngine.UI;
 
 public class DamagePrefabScript : MonoBehaviour
 {
+    private NetworkObject netObj;
     public Rigidbody2D _rb;
     public Text _damageText;
     public float _damage;
     public float _currentLifeTime;
     public float _maxLifetime;
     public AEnemy _currentEnemy;
+    private void Awake()
+    {
+        netObj = GetComponentInChildren<NetworkObject>();
+    }
     public void InitDamage(float damage, AEnemy enemy)
     {
         transform.position = enemy.transform.position + new Vector3(UnityEngine.Random.Range(0.2f, -0.2f), 0.2f, 0);
@@ -37,7 +43,7 @@ public class DamagePrefabScript : MonoBehaviour
             _currentEnemy._damagePrefab = null;
             _currentEnemy = null;
             _damage = 0;
-            REF.PP.AddToPool(gameObject);
+            REF.ObjPool.AddToPool(netObj);
         }
     }
 

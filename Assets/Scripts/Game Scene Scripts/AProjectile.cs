@@ -1,9 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public abstract class AProjectile : MonoBehaviour
 {
+    private NetworkObject netObj;
     public float CurrentLifeTime { get; protected set; } //Check IProjectile for explanations
     public float MaxLifetime { get; set; }
     public int Damage { get; set; }
@@ -19,6 +21,7 @@ public abstract class AProjectile : MonoBehaviour
 
     public virtual void Awake()
     {
+        netObj = GetComponentInChildren<NetworkObject>();
         _projectileRB = GetComponentInChildren<Rigidbody2D>();
         _projectileCollider = GetComponentInChildren<Collider2D>();
         _trailRenderer = GetComponentInChildren<TrailRenderer>();
@@ -74,7 +77,7 @@ public abstract class AProjectile : MonoBehaviour
     protected void DespawnBullet()
     {
         _trailRenderer.Clear();
-        REF.PP.AddToPool(gameObject);
+        REF.ObjPool.AddToPool(netObj);
     }
     public virtual IEnumerator DespawnAnimation()
     {

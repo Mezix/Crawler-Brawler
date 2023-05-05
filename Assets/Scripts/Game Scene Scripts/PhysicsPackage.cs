@@ -1,10 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public class PhysicsPackage : MonoBehaviour, Punchable
 {
+    private NetworkObject _netObj;
     public float _punchForce;
     public Rigidbody2D _rb;
 
@@ -12,7 +14,10 @@ public class PhysicsPackage : MonoBehaviour, Punchable
 
     public bool _wasDispensed;
     public Vector3 dispensedVector;
-
+    private void Awake()
+    {
+        _netObj = GetComponentInChildren<NetworkObject>();
+    }
     public void Punched(Vector3 dir)
     {
         if (brittle)
@@ -46,6 +51,6 @@ public class PhysicsPackage : MonoBehaviour, Punchable
     }
     public void DestroyPackage()
     {
-       REF.PP.AddToPool(gameObject);
+       REF.ObjPool.AddToPool(_netObj);
     }
 }
