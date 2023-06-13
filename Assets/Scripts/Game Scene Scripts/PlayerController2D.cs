@@ -31,6 +31,9 @@ public class PlayerController2D : NetworkBehaviour
     private PlayerControls _controls;
     private Vector2 controllerMoveInputVector;
     public GameObject _controllerCrosshair;
+    public GameObject _leftClickProjectilePrefab;
+    public GameObject _rightClickProjectilePrefab;
+
     private void Awake()
     {
         REF._PCons.Add(this);
@@ -48,7 +51,10 @@ public class PlayerController2D : NetworkBehaviour
         _controls.Gameplay.Move.canceled += ctx => controllerMoveInputVector = Vector2.zero;
 
         _controls.Gameplay.Aim.performed += ctx => ControllerAim(ctx.ReadValue<Vector2>(), true);
-        _controls.Gameplay.Aim.canceled += ctx => ControllerAim(Vector2.zero, false); 
+        _controls.Gameplay.Aim.canceled += ctx => ControllerAim(Vector2.zero, false);
+
+        _leftClickProjectilePrefab = Resources.Load(GS.Prefabs("Projectile"), typeof(GameObject)) as GameObject;
+        _rightClickProjectilePrefab = Resources.Load(GS.Prefabs("Projectile"), typeof(GameObject)) as GameObject;
     }
 
     private void OnEnable()
@@ -123,12 +129,12 @@ public class PlayerController2D : NetworkBehaviour
 
     private void LightAttack()
     {
-        GameObject p = REF.ObjPool.GetNetworkObjectFromPool("DefaultProjectile").gameObject;
+        NetworkObject p = NetworkObjectPool.Singleton.GetNetworkObject(_leftClickProjectilePrefab);
         p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
     }
     private void HeavyAttack()
     {
-        GameObject p = REF.ObjPool.GetNetworkObjectFromPool("DefaultProjectile").gameObject;
+        NetworkObject p = NetworkObjectPool.Singleton.GetNetworkObject(_rightClickProjectilePrefab);
         p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
     }
 

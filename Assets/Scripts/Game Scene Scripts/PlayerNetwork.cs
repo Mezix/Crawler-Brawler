@@ -28,7 +28,8 @@ public class PlayerNetwork : NetworkBehaviour
 
     struct PlayerNetworkData : INetworkSerializable
     {
-        private float _x, _y;
+        private float _x;
+        private float _y;
         private float _zrot;
 
         internal Vector3 Position

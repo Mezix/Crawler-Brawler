@@ -96,6 +96,7 @@ MonoBehaviour:
   _controllerOn: 0
   _pUI: {fileID: 6300568427257177323}
   _controllerCrosshair: {fileID: 7173172151592123353}
+  ProjectilePrefab: {fileID: 4405465942197462886, guid: 107e8ae59a1d3cd48a1f59ed22fbba38, type: 3}
 --- !u!114 &373160353065058472
 MonoBehaviour:
   m_ObjectHideFlags: 0

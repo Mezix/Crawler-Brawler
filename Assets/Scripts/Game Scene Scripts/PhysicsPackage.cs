@@ -14,9 +14,12 @@ public class PhysicsPackage : MonoBehaviour, Punchable
 
     public bool _wasDispensed;
     public Vector3 dispensedVector;
+
+    public GameObject _packagePrefabReference;
     private void Awake()
     {
         _netObj = GetComponentInChildren<NetworkObject>();
+        _packagePrefabReference = Resources.Load("PhysicsObject", typeof(GameObject)) as GameObject;
     }
     public void Punched(Vector3 dir)
     {
@@ -51,6 +54,6 @@ public class PhysicsPackage : MonoBehaviour, Punchable
     }
     public void DestroyPackage()
     {
-       REF.ObjPool.AddToPool(_netObj);
+        NetworkObjectPool.Singleton.ReturnNetworkObject(_netObj, _packagePrefabReference);
     }
 }

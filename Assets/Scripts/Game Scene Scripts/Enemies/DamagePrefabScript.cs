@@ -14,9 +14,12 @@ public class DamagePrefabScript : MonoBehaviour
     public float _currentLifeTime;
     public float _maxLifetime;
     public AEnemy _currentEnemy;
+
+    public GameObject _DamageTextTextPrefabReference;
     private void Awake()
     {
         netObj = GetComponentInChildren<NetworkObject>();
+        _DamageTextTextPrefabReference = Resources.Load("DamageTextPrefab", typeof(GameObject)) as GameObject;
     }
     public void InitDamage(float damage, AEnemy enemy)
     {
@@ -43,7 +46,7 @@ public class DamagePrefabScript : MonoBehaviour
             _currentEnemy._damagePrefab = null;
             _currentEnemy = null;
             _damage = 0;
-            REF.ObjPool.AddToPool(netObj);
+            NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _DamageTextTextPrefabReference);
         }
     }
 

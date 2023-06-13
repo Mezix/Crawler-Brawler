@@ -19,6 +19,8 @@ public abstract class AProjectile : MonoBehaviour
     [HideInInspector] public Collider2D _projectileCollider;
     [HideInInspector] public TrailRenderer _trailRenderer;
 
+    public GameObject _projectilePrefabReference;
+
     public virtual void Awake()
     {
         netObj = GetComponentInChildren<NetworkObject>();
@@ -26,7 +28,9 @@ public abstract class AProjectile : MonoBehaviour
         _projectileCollider = GetComponentInChildren<Collider2D>();
         _trailRenderer = GetComponentInChildren<TrailRenderer>();
         MaxLifetime = 3;
+        _projectilePrefabReference = Resources.Load(GS.Prefabs("Projectile"), typeof(GameObject)) as GameObject;
     }
+
     public void Update()
     {
         CurrentLifeTime += Time.deltaTime;
@@ -77,7 +81,7 @@ public abstract class AProjectile : MonoBehaviour
     protected void DespawnBullet()
     {
         _trailRenderer.Clear();
-        REF.ObjPool.AddToPool(netObj);
+        NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _projectilePrefabReference);
     }
     public virtual IEnumerator DespawnAnimation()
     {

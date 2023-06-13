@@ -15,7 +15,7 @@ public class CustomNetworkManager : NetworkManager
 
     private void InitNetworkPrefabs()
     {
-        Singleton.AddNetworkPrefab((GameObject) Resources.Load(GS.Prefabs("PhysicsObject")));
+        //Singleton.AddNetworkPrefab((GameObject) Resources.Load(GS.Prefabs("PhysicsObject")));
     }
 
     private void OnGUI()

@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 
 public abstract class AEnemy : MonoBehaviour
@@ -29,8 +30,8 @@ public abstract class AEnemy : MonoBehaviour
 
         if (!_damagePrefab)
         {
-            GameObject g = REF.ObjPool.GetNetworkObjectFromPool("DamageText").gameObject;
-            _damagePrefab = g.GetComponent<DamagePrefabScript>();
+            NetworkObject netObj = NetworkObjectPool.Singleton.GetNetworkObject(Resources.Load("DamageTextPrefab", typeof (GameObject)) as GameObject);
+            _damagePrefab = netObj.GetComponent<DamagePrefabScript>();
         }
         _damagePrefab.InitDamage(_damagePrefab._damage += damage, this);
     }
