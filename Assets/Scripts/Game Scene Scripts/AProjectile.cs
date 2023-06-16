@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-public abstract class AProjectile : MonoBehaviour
+public abstract class AProjectile : NetworkBehaviour
 {
     private NetworkObject netObj;
     public float CurrentLifeTime { get; protected set; } //Check IProjectile for explanations
@@ -70,24 +70,22 @@ public abstract class AProjectile : MonoBehaviour
         HitPlayer = false;
         if (!HitPlayer)
         {
-            foreach(PlayerController2D pcon in REF._PCons)
-            {
-                if (!pcon) continue;
-                Physics2D.IgnoreCollision(_projectileCollider, pcon._playerCol);
-            }
+            Physics2D.IgnoreCollision(_projectileCollider, REF.PCon._playerCol);
         }
         if (_trailRenderer) _trailRenderer.Clear();
-    }
-    protected void DespawnBullet()
-    {
-        _trailRenderer.Clear();
-        NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _projectilePrefabReference);
     }
     public virtual IEnumerator DespawnAnimation()
     {
         _despawnAnimationPlaying = true;
         yield return new WaitForSeconds(0f);
-        DespawnBullet();
+        if(IsServer) DespawnProjectileServerRpc();
+    }
+    [ServerRpc]
+    protected void DespawnProjectileServerRpc()
+    {
+        _trailRenderer.Clear();
+        NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _projectilePrefabReference);
+        if (IsSpawned) netObj.Despawn();
     }
     public virtual void OnTriggerEnter2D(Collider2D col)
     {

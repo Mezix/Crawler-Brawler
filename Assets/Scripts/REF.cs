@@ -16,5 +16,5 @@ public static class REF
     /// 0 = Tech Wizard; 1 = First Aid Fiddler; 2 = Immolating Imp; 3 = Portal Priest; 4 = Potion Peddler; 5 = Woodland Wanderer
     /// </summary>
     public static int CharIndex;
-    public static List<PlayerController2D> _PCons = new List<PlayerController2D>();
+    public static PlayerController2D PCon;
 }

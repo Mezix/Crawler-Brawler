@@ -5,7 +5,7 @@ using UnityEngine;
 using Unity.Netcode;
 using UnityEngine.UI;
 
-public class DamagePrefabScript : MonoBehaviour
+public class DamagePrefabScript : NetworkBehaviour
 {
     private NetworkObject netObj;
     public Rigidbody2D _rb;
@@ -19,7 +19,7 @@ public class DamagePrefabScript : MonoBehaviour
     private void Awake()
     {
         netObj = GetComponentInChildren<NetworkObject>();
-        _DamageTextTextPrefabReference = Resources.Load("DamageTextPrefab", typeof(GameObject)) as GameObject;
+        _DamageTextTextPrefabReference = Resources.Load(GS.Prefabs("DamageTextPrefab"), typeof(GameObject)) as GameObject;
     }
     public void InitDamage(float damage, AEnemy enemy)
     {
@@ -46,6 +46,16 @@ public class DamagePrefabScript : MonoBehaviour
             _currentEnemy._damagePrefab = null;
             _currentEnemy = null;
             _damage = 0;
+
+            //netObj.Despawn();
+            //DespawnDamageTextServerRpc();
+            if (IsServer)
+            {
+            }
+            else
+            {
+
+            }
             NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _DamageTextTextPrefabReference);
         }
     }

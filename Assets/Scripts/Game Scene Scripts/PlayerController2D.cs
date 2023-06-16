@@ -36,7 +36,7 @@ public class PlayerController2D : NetworkBehaviour
 
     private void Awake()
     {
-        REF._PCons.Add(this);
+        REF.PCon = this;
         _playerRB = GetComponentInChildren<Rigidbody2D>();
         _playerCol = GetComponentInChildren<Collider2D>();
         _playerAnim = GetComponentInChildren<Animator>();
@@ -44,7 +44,7 @@ public class PlayerController2D : NetworkBehaviour
         //  InitControls
 
         _controls = new PlayerControls();
-        _controls.Gameplay.LightAttack.performed += ctx => { if (_controllerOn) LightAttack(); };
+        _controls.Gameplay.LightAttack.performed += ctx => { if (_controllerOn) TriggerLightAttack(); };
         _controls.Gameplay.HeavyAttack.performed += ctx => { if (_controllerOn) HeavyAttack(); };
 
         _controls.Gameplay.Move.performed += ctx => controllerMoveInputVector = ctx.ReadValue<Vector2>();
@@ -66,6 +66,7 @@ public class PlayerController2D : NetworkBehaviour
         maxSpeed = 0.1f;
         REF.MainCam.SetObjectToTrack(transform);
     }
+
     private void Update()
     {
         horizontalInput = 0;
@@ -95,49 +96,40 @@ public class PlayerController2D : NetworkBehaviour
     {
         HandleMovement();
     }
-    public override void OnNetworkSpawn()
-    {
-        if (REF.CurrentScene == Loader.Scene.MenuScene) Destroy(gameObject);
-        if (IsOwner) SetCharacter();
-        else ThisCharacterIsNotMyPlayerCharacter();
-        base.OnNetworkSpawn();
-    }
-
-    private void ThisCharacterIsNotMyPlayerCharacter()
-    {
-        this.enabled = false;
-        _pUI.enabled = false;
-    }
-    private void SetCharacter()
-    {
-        if (REF.CharIndex == 0) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/TechWizard", typeof(Sprite)) as Sprite;
-        else if (REF.CharIndex == 1) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/FirstAidFiddler", typeof(Sprite)) as Sprite;
-        else if (REF.CharIndex == 2) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/ImmolatingImp", typeof(Sprite)) as Sprite;
-        else if (REF.CharIndex == 3) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/PortalPriest", typeof(Sprite)) as Sprite;
-        else if (REF.CharIndex == 4) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/PotionPeddler", typeof(Sprite)) as Sprite;
-        else if (REF.CharIndex == 5) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/WoodlandWanderer", typeof(Sprite)) as Sprite;
-        else Debug.Log("Index wrong!");
-    }
-
     private void HandleMouseInput()
     {
         if(Input.GetKeyDown(KeyCode.Mouse0))
         {
-            LightAttack();
+            TriggerLightAttack();
         }
     }
 
-    private void LightAttack()
+    private void TriggerLightAttack()
     {
-        NetworkObject p = NetworkObjectPool.Singleton.GetNetworkObject(_leftClickProjectilePrefab);
-        p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
+        LightAttackServerRPC();
+    }
+
+    [ServerRpc]
+    public void LightAttackServerRPC()
+    {
+        NetworkObject netObj = NetworkObjectPool.Singleton.GetNetworkObject(_leftClickProjectilePrefab);
+        netObj.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
+
+        if (!netObj.IsSpawned)
+        {
+            netObj.Spawn();
+        }
     }
     private void HeavyAttack()
     {
-        NetworkObject p = NetworkObjectPool.Singleton.GetNetworkObject(_rightClickProjectilePrefab);
-        p.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
-    }
+        /*NetworkObject netObj = NetworkObjectPool.Singleton.GetNetworkObject(_rightClickProjectilePrefab);
+        netObj.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
 
+        if (!netObj.IsSpawned)
+        {
+            netObj.Spawn();
+        }*/
+    }
 
     //  Keyboard and Mouse
     private void HandleMousePos()
@@ -165,5 +157,36 @@ public class PlayerController2D : NetworkBehaviour
         _controllerCrosshair.transform.localPosition = vec * 2;
         HM.RotateLocalTransformToAngle(_armTransform, new Vector3(0, 0, HM.GetAngle2DBetween(Vector3.zero, vec)));
         Cursor.visible = false;
+    }
+
+    //  Network Stuff
+
+
+    public override void OnNetworkSpawn()
+    {
+        if (REF.CurrentScene == Loader.Scene.MenuScene) Destroy(gameObject);
+        if (IsOwner) IsMyPlayerCharacter();
+        else ThisCharacterIsNotMyPlayerCharacter();
+        base.OnNetworkSpawn();
+    }
+
+    private void IsMyPlayerCharacter()
+    {
+        /*
+        if (REF.CharIndex == 0) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/TechWizard", typeof(Sprite)) as Sprite;
+        else if (REF.CharIndex == 1) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/FirstAidFiddler", typeof(Sprite)) as Sprite;
+        else if (REF.CharIndex == 2) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/ImmolatingImp", typeof(Sprite)) as Sprite;
+        else if (REF.CharIndex == 3) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/PortalPriest", typeof(Sprite)) as Sprite;
+        else if (REF.CharIndex == 4) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/PotionPeddler", typeof(Sprite)) as Sprite;
+        else if (REF.CharIndex == 5) _characterSpriteRend.sprite = Resources.Load("Graphics/WizardWheelsGraphics/Wizards/WoodlandWanderer", typeof(Sprite)) as Sprite;
+        else Debug.Log("Index wrong!");
+        */
+    }
+
+    private void ThisCharacterIsNotMyPlayerCharacter()
+    {
+        _controllerCrosshair.SetActive(false);
+        _pUI.enabled = false;
+        enabled = false;
     }
 }
