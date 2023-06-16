@@ -48,6 +48,7 @@ GameObject:
   - component: {fileID: 8645661856001703053}
   - component: {fileID: 8991873185204742040}
   - component: {fileID: 2002918909336720136}
+  - component: {fileID: 4810396705590523200}
   m_Layer: 0
   m_Name: PlayerPrefab
   m_TagString: Untagged
@@ -89,14 +90,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerRB: {fileID: 0}
   _playerCol: {fileID: 0}
+  _characterSpriteRend: {fileID: 5866453833348116699}
   _playerAnim: {fileID: 0}
   _armTransform: {fileID: 6801372531249337188}
   _weaponProjectileSpot: {fileID: 2348115072987425744}
-  _characterSpriteRend: {fileID: 5866453833348116699}
   _controllerOn: 0
   _pUI: {fileID: 6300568427257177323}
   _controllerCrosshair: {fileID: 7173172151592123353}
-  ProjectilePrefab: {fileID: 4405465942197462886, guid: 107e8ae59a1d3cd48a1f59ed22fbba38, type: 3}
+  _leftClickProjectilePrefab: {fileID: 0}
 --- !u!114 &373160353065058472
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -211,6 +212,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 80d7c879794dfda4687da0e400131852, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!61 &4810396705590523200
+BoxCollider2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 373160353568161620}
+  m_Enabled: 1
+  m_Density: 1
+  m_Material: {fileID: 0}
+  m_IsTrigger: 1
+  m_UsedByEffector: 0
+  m_UsedByComposite: 0
+  m_Offset: {x: 0, y: 0}
+  m_SpriteTilingProperty:
+    border: {x: 0, y: 0, z: 0, w: 0}
+    pivot: {x: 0, y: 0}
+    oldSize: {x: 0, y: 0}
+    newSize: {x: 0, y: 0}
+    adaptiveTilingThreshold: 0
+    drawMode: 0
+    adaptiveTiling: 0
+  m_AutoTiling: 0
+  serializedVersion: 2
+  m_Size: {x: 2, y: 2}
+  m_EdgeRadius: 0.15
 --- !u!1 &419477959630633815
 GameObject:
   m_ObjectHideFlags: 0

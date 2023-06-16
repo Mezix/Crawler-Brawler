@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 3548071768122560875}
   - component: {fileID: 527227621}
   m_Layer: 0
-  m_Name: ProjectilePool
+  m_Name: NetworkObjectPool
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -158,7 +158,7 @@ GameObject:
   - component: {fileID: 996899775958471284}
   m_Layer: 0
   m_Name: Projectile
-  m_TagString: DefaultProjectile
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -195,6 +195,7 @@ MonoBehaviour:
   _projectileRB: {fileID: 0}
   _projectileCollider: {fileID: 0}
   _trailRenderer: {fileID: 0}
+  _projectilePrefabReference: {fileID: 0}
 --- !u!212 &5436352465447789411
 SpriteRenderer:
   m_ObjectHideFlags: 0

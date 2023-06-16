@@ -36,7 +36,7 @@ public class DamagePrefabScript : NetworkBehaviour
         _currentLifeTime += Time.deltaTime;
         _currentLifeTime = Mathf.Min(_maxLifetime, _currentLifeTime);
         if (_currentLifeTime < _maxLifetime) MoveDamageText();
-        else RemoveEnemy(); 
+        else RemoveEnemy();
     }
 
     private void RemoveEnemy()
@@ -47,22 +47,19 @@ public class DamagePrefabScript : NetworkBehaviour
             _currentEnemy = null;
             _damage = 0;
 
-            //netObj.Despawn();
-            //DespawnDamageTextServerRpc();
-            if (IsServer)
-            {
-            }
-            else
-            {
-
-            }
-            NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _DamageTextTextPrefabReference);
+            if (IsServer) DespawnTextServerRpc();
         }
     }
 
+    [ServerRpc]
+    protected void DespawnTextServerRpc()
+    {
+        //NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _DamageTextTextPrefabReference);
+        if (IsSpawned) netObj.Despawn();
+    }
     private void MoveDamageText()
     {
         _rb.MovePosition(_rb.transform.position += Vector3.up * 0.02f);
-        _damageText.color = new Color(_damageText.color.r, _damageText.color.g, _damageText.color.b, 1 - _currentLifeTime/_maxLifetime);
+        _damageText.color = new Color(_damageText.color.r, _damageText.color.g, _damageText.color.b, 1 - _currentLifeTime / _maxLifetime);
     }
 }

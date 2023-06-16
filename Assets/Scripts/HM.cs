@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
@@ -67,5 +68,12 @@ public static class HM
         if (s == "false") return false;
         Debug.Log("ERROR: Not a valid bool");
         return false;
+    }
+
+    public static Vector3 PolarToVector(float zRotationInEulerAngles, int radius = 1)
+    {
+        return new Vector3(radius * Mathf.Cos(zRotationInEulerAngles * Mathf.Deg2Rad),
+                           radius * Mathf.Sin(zRotationInEulerAngles * Mathf.Deg2Rad),
+                           0);
     }
 }

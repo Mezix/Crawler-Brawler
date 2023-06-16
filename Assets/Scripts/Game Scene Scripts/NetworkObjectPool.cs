@@ -78,7 +78,7 @@ public class NetworkObjectPool : NetworkBehaviour
         {
             var go = CreateInstance(prefab);
             NetworkObject networkObject = go.GetComponent<NetworkObject>();
-            networkObject.Spawn(); // spawn so we can later despawn them in returnNetworkObject
+            if(IsServer) networkObject.Spawn(); // spawn so we can later despawn them in returnNetworkObject
             ReturnNetworkObject(go.GetComponent<NetworkObject>(), prefab);
         }
 
@@ -204,6 +204,7 @@ struct PoolConfigObject
     public int PrewarmCount;
 }
 
+//  Handles the client side of things
 class PooledPrefabInstanceHandler : INetworkPrefabInstanceHandler
 {
     GameObject m_Prefab;

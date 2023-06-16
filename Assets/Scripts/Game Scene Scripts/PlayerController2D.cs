@@ -6,14 +6,16 @@ using Unity.Netcode;
 
 public class PlayerController2D : NetworkBehaviour
 {
+    //  Misc
+    [HideInInspector] public Rigidbody2D _playerRB;
+    [HideInInspector] public Collider2D _playerCol;
+    public SpriteRenderer _characterSpriteRend;
+
     //  Movement
     private float horizontalInput, verticalInput;
     private Vector3 moveVector;
     private float maxSpeed;
     private float currentSpeed;
-
-    [HideInInspector] public Rigidbody2D _playerRB;
-    [HideInInspector] public Collider2D _playerCol;
 
     //  Animation
     [HideInInspector] public Animator _playerAnim;
@@ -21,9 +23,10 @@ public class PlayerController2D : NetworkBehaviour
     public readonly string _horizontalParameter = "Horizontal";
     public readonly string _verticalParameter = "Vertical";
 
+    //  Combat
     public Transform _armTransform;
     public Transform _weaponProjectileSpot;
-    public SpriteRenderer _characterSpriteRend;
+    public List<IThrowable> _nearbyThrowables = new List<IThrowable>();
 
     [Header("Controllers")]
     public bool _controllerOn;
@@ -32,7 +35,9 @@ public class PlayerController2D : NetworkBehaviour
     private Vector2 controllerMoveInputVector;
     public GameObject _controllerCrosshair;
     public GameObject _leftClickProjectilePrefab;
-    public GameObject _rightClickProjectilePrefab;
+
+    //  Network Stuff
+    private readonly NetworkVariable<DirectionCursorData> _cursorData = new NetworkVariable<DirectionCursorData>(writePerm: NetworkVariableWritePermission.Owner);
 
     private void Awake()
     {
@@ -44,8 +49,8 @@ public class PlayerController2D : NetworkBehaviour
         //  InitControls
 
         _controls = new PlayerControls();
-        _controls.Gameplay.LightAttack.performed += ctx => { if (_controllerOn) TriggerLightAttack(); };
-        _controls.Gameplay.HeavyAttack.performed += ctx => { if (_controllerOn) HeavyAttack(); };
+        _controls.Gameplay.LightAttack.performed += ctx => { if (_controllerOn) LightAttackInput(); };
+        _controls.Gameplay.HeavyAttack.performed += ctx => { if (_controllerOn) PickupNearestThrowableInput(); };
 
         _controls.Gameplay.Move.performed += ctx => controllerMoveInputVector = ctx.ReadValue<Vector2>();
         _controls.Gameplay.Move.canceled += ctx => controllerMoveInputVector = Vector2.zero;
@@ -54,7 +59,6 @@ public class PlayerController2D : NetworkBehaviour
         _controls.Gameplay.Aim.canceled += ctx => ControllerAim(Vector2.zero, false);
 
         _leftClickProjectilePrefab = Resources.Load(GS.Prefabs("Projectile"), typeof(GameObject)) as GameObject;
-        _rightClickProjectilePrefab = Resources.Load(GS.Prefabs("Projectile"), typeof(GameObject)) as GameObject;
     }
 
     private void OnEnable()
@@ -69,10 +73,26 @@ public class PlayerController2D : NetworkBehaviour
 
     private void Update()
     {
+        if (IsOwner)
+        {
+            OwnerBehaviour();
+        }
+        else
+        {
+            NotOwnerBehaviour();
+        }
+    }
+    private void FixedUpdate()
+    {
+        HandleMovement();
+    }
+
+    private void OwnerBehaviour()
+    {
         horizontalInput = 0;
         verticalInput = 0;
 
-        if(_controllerOn)
+        if (_controllerOn)
         {
             horizontalInput = controllerMoveInputVector.x;
             verticalInput = controllerMoveInputVector.y;
@@ -84,27 +104,39 @@ public class PlayerController2D : NetworkBehaviour
             if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) verticalInput = -1;
             if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) horizontalInput = 1;
         }
-
-        if(!_controllerOn)
+        if (!_controllerOn)
         {
             HandleMouseInput();
             HandleMousePos();
         }
-    }
 
-    private void FixedUpdate()
+        //  Network Stuff
+
+        _cursorData.Value = new DirectionCursorData()
+        {
+            DirectionalCursorRotation = _armTransform.rotation.eulerAngles
+        };
+
+    }
+    private void NotOwnerBehaviour()
     {
-        HandleMovement();
+        //transform.position = Vector3.SmoothDamp(transform.position, _netState.Value.Position, ref _vel, cheapInterpolationTime);
+        HM.RotateLocalTransformToAngle(_armTransform, _cursorData.Value.DirectionalCursorRotation);
     }
     private void HandleMouseInput()
     {
-        if(Input.GetKeyDown(KeyCode.Mouse0))
+        if (Input.GetKeyDown(KeyCode.Mouse0))
         {
-            TriggerLightAttack();
+            LightAttackInput();
+        }
+        if (Input.GetKeyDown(KeyCode.Mouse1))
+        {
+            PickupNearestThrowableInput();
         }
     }
 
-    private void TriggerLightAttack()
+    // Left Click Interaction
+    private void LightAttackInput()
     {
         LightAttackServerRPC();
     }
@@ -113,24 +145,61 @@ public class PlayerController2D : NetworkBehaviour
     public void LightAttackServerRPC()
     {
         NetworkObject netObj = NetworkObjectPool.Singleton.GetNetworkObject(_leftClickProjectilePrefab);
-        netObj.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
+        netObj.GetComponent<AProjectile>().SetTransform(_weaponProjectileSpot);
 
         if (!netObj.IsSpawned)
         {
             netObj.Spawn();
         }
     }
-    private void HeavyAttack()
-    {
-        /*NetworkObject netObj = NetworkObjectPool.Singleton.GetNetworkObject(_rightClickProjectilePrefab);
-        netObj.GetComponent<AProjectile>().SetBulletStatsAndTransformToWeaponStats(_weaponProjectileSpot);
 
-        if (!netObj.IsSpawned)
+    //  Right Click Interaction
+    private void PickupNearestThrowableInput()
+    {
+
+        if (_nearbyThrowables.Count > 0)
         {
-            netObj.Spawn();
-        }*/
+            IThrowable throwable = _nearbyThrowables[0];
+            if(throwable != null)
+            {
+                Vector3 throwDir = HM.PolarToVector(180 + _cursorData.Value.DirectionalCursorRotation.z);
+                //Vector3 throwDir = HM.PolarToVector(180 + HM.GetAngle2DBetween(transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition))).normalized;
+                throwable.Throw(throwDir);
+                Debug.Log(throwDir);
+
+                // choose nearest throwable
+                /*foreach(IThrowable throwable in _nearbyThrowables)
+                {
+
+                }*/
+                //_nearbyThrowables.Remove(_nearbyThrowables[0]);
+                //Debug.Log("Throwing!");
+            }
+        }
     }
 
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.TryGetComponent(out IThrowable throwable))
+        {
+            if (!_nearbyThrowables.Contains(throwable))
+            {
+                _nearbyThrowables.Add(throwable);
+               // Debug.Log(throwable + " entered.");
+            }
+        }
+    }
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.TryGetComponent(out IThrowable throwable))
+        {
+            if (_nearbyThrowables.Contains(throwable))
+            {
+                _nearbyThrowables.Remove(throwable);
+               // Debug.Log(throwable + " exited.");
+            }
+        }
+    }
     //  Keyboard and Mouse
     private void HandleMousePos()
     {
@@ -144,7 +213,7 @@ public class PlayerController2D : NetworkBehaviour
         moveVector = horizontalInput * maxSpeed * Vector3.right + verticalInput * maxSpeed * Vector3.up;
         currentSpeed = Vector3.Magnitude(moveVector);
         _playerRB.MovePosition(transform.position + moveVector);
-        
+
         _playerAnim.SetFloat(_speedParameter, currentSpeed);
         _playerAnim.SetFloat(_horizontalParameter, horizontalInput);
         _playerAnim.SetFloat(_verticalParameter, verticalInput);
@@ -160,7 +229,6 @@ public class PlayerController2D : NetworkBehaviour
     }
 
     //  Network Stuff
-
 
     public override void OnNetworkSpawn()
     {
@@ -187,6 +255,20 @@ public class PlayerController2D : NetworkBehaviour
     {
         _controllerCrosshair.SetActive(false);
         _pUI.enabled = false;
-        enabled = false;
+    }
+
+    struct DirectionCursorData : INetworkSerializable
+    {
+        private float _directionCursorRotation;
+        internal Vector3 DirectionalCursorRotation
+        {
+            get => new Vector3(0, 0, _directionCursorRotation);
+            set => _directionCursorRotation = value.z;
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref _directionCursorRotation);
+        }
     }
 }

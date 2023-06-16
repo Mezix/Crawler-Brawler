@@ -177,7 +177,7 @@ GameObject:
   - component: {fileID: 4071244475487524390}
   m_Layer: 0
   m_Name: DamageTextPrefab
-  m_TagString: DamageText
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -216,6 +216,7 @@ MonoBehaviour:
   _currentLifeTime: 0
   _maxLifetime: 0
   _currentEnemy: {fileID: 0}
+  _DamageTextTextPrefabReference: {fileID: 0}
 --- !u!50 &8920879321909111531
 Rigidbody2D:
   serializedVersion: 4

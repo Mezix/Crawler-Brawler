@@ -61,8 +61,9 @@ public abstract class AProjectile : NetworkBehaviour
     }
 
     //  Bullet Spawning
-    public virtual void SetBulletStatsAndTransformToWeaponStats(Transform t)
+    public virtual void SetTransform(Transform t)
     {
+        if (_trailRenderer) _trailRenderer.Clear();
         transform.position = t.transform.position;
         transform.rotation = t.transform.rotation;
         ProjectileSpeed = 15;
@@ -84,7 +85,7 @@ public abstract class AProjectile : NetworkBehaviour
     protected void DespawnProjectileServerRpc()
     {
         _trailRenderer.Clear();
-        NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _projectilePrefabReference);
+        //NetworkObjectPool.Singleton.ReturnNetworkObject(netObj, _projectilePrefabReference);
         if (IsSpawned) netObj.Despawn();
     }
     public virtual void OnTriggerEnter2D(Collider2D col)

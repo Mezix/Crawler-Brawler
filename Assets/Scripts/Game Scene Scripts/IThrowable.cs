@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public interface Punchable
+public interface IThrowable
 {
-    public void Punched(Vector3 dir);
+    public void Throw(Vector3 dir);
 }
