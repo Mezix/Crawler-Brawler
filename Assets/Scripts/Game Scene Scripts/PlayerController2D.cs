@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 
 public class PlayerController2D : NetworkBehaviour
 {
@@ -26,7 +27,15 @@ public class PlayerController2D : NetworkBehaviour
     //  Combat
     public Transform _armTransform;
     public Transform _weaponProjectileSpot;
-    public List<IThrowable> _nearbyThrowables = new List<IThrowable>();
+    public List<AThrowable> _nearbyThrowables = new List<AThrowable>();
+    public AThrowable _currentThrowable;
+
+    public CombatState _combatState = CombatState.Default;
+    public enum CombatState
+    {
+        Default,
+        ThrowableInHand
+    }
 
     [Header("Controllers")]
     public bool _controllerOn;
@@ -39,6 +48,11 @@ public class PlayerController2D : NetworkBehaviour
     //  Network Stuff
     private readonly NetworkVariable<DirectionCursorData> _cursorData = new NetworkVariable<DirectionCursorData>(writePerm: NetworkVariableWritePermission.Owner);
 
+    private readonly NetworkVariable<PlayerMovementData> _playerNetworkData = new NetworkVariable<PlayerMovementData>(writePerm: NetworkVariableWritePermission.Owner);
+    private Vector3 _vel;
+    private float _rotVel;
+    [SerializeField] private float cheapInterpolationTime = 0.1f;
+
     private void Awake()
     {
         REF.PCon = this;
@@ -49,8 +63,8 @@ public class PlayerController2D : NetworkBehaviour
         //  InitControls
 
         _controls = new PlayerControls();
-        _controls.Gameplay.LightAttack.performed += ctx => { if (_controllerOn) LightAttackInput(); };
-        _controls.Gameplay.HeavyAttack.performed += ctx => { if (_controllerOn) PickupNearestThrowableInput(); };
+        _controls.Gameplay.LightAttack.performed += ctx => { if (_controllerOn) ShootInput(); };
+        _controls.Gameplay.HeavyAttack.performed += ctx => { if (_controllerOn) PickUpInput(); };
 
         _controls.Gameplay.Move.performed += ctx => controllerMoveInputVector = ctx.ReadValue<Vector2>();
         _controls.Gameplay.Move.canceled += ctx => controllerMoveInputVector = Vector2.zero;
@@ -84,8 +98,30 @@ public class PlayerController2D : NetworkBehaviour
     }
     private void FixedUpdate()
     {
-        HandleMovement();
+        if (IsOwner)
+        {
+            moveVector = horizontalInput * maxSpeed * Vector3.right + verticalInput * maxSpeed * Vector3.up;
+            currentSpeed = Vector3.Magnitude(moveVector);
+            _playerRB.MovePosition(transform.position + moveVector);
+
+            _playerAnim.SetFloat(_speedParameter, currentSpeed);
+            _playerAnim.SetFloat(_horizontalParameter, horizontalInput);
+            _playerAnim.SetFloat(_verticalParameter, verticalInput);
+        }
+        else
+        {
+            //currentSpeed = 1;
+
+            moveVector = _playerNetworkData.Value.XDir * maxSpeed * Vector3.right + _playerNetworkData.Value.YDir * maxSpeed * Vector3.up;
+            currentSpeed = Vector3.Magnitude(moveVector);
+            transform.position = Vector3.SmoothDamp(transform.position, _playerNetworkData.Value.Position, ref _vel, cheapInterpolationTime);
+
+            _playerAnim.SetFloat(_speedParameter, currentSpeed);
+            _playerAnim.SetFloat(_horizontalParameter, _playerNetworkData.Value.XDir);
+            _playerAnim.SetFloat(_verticalParameter, _playerNetworkData.Value.YDir);
+        }
     }
+
 
     private void OwnerBehaviour()
     {
@@ -114,29 +150,46 @@ public class PlayerController2D : NetworkBehaviour
 
         _cursorData.Value = new DirectionCursorData()
         {
-            DirectionalCursorRotation = _armTransform.rotation.eulerAngles
+            DirectionalCursorRotation = _armTransform.transform.rotation.eulerAngles
+        };
+        _playerNetworkData.Value = new PlayerMovementData()
+        {
+            Position = transform.position,
+            Rotation = transform.rotation.eulerAngles,
+            XDir = horizontalInput,
+            YDir = verticalInput
         };
 
     }
     private void NotOwnerBehaviour()
     {
-        //transform.position = Vector3.SmoothDamp(transform.position, _netState.Value.Position, ref _vel, cheapInterpolationTime);
-        HM.RotateLocalTransformToAngle(_armTransform, _cursorData.Value.DirectionalCursorRotation);
+        HM.RotateLocalTransformToAngle(_armTransform.transform, _cursorData.Value.DirectionalCursorRotation);
+        HM.RotateLocalTransformToAngle(transform, new Vector3(0, 0, Mathf.SmoothDampAngle(transform.rotation.eulerAngles.z, _playerNetworkData.Value.Rotation.z, ref _rotVel, cheapInterpolationTime)));
     }
     private void HandleMouseInput()
     {
-        if (Input.GetKeyDown(KeyCode.Mouse0))
+        if (_combatState == CombatState.Default)
         {
-            LightAttackInput();
+            if (Input.GetKeyDown(KeyCode.Mouse0))
+            {
+                ShootInput();
+            }
+            if (Input.GetKeyDown(KeyCode.Mouse1))
+            {
+                PickUpInput();
+            }
         }
-        if (Input.GetKeyDown(KeyCode.Mouse1))
+        else if (_combatState == CombatState.ThrowableInHand)
         {
-            PickupNearestThrowableInput();
+            if (Input.GetKeyDown(KeyCode.Mouse1))
+            {
+                ThrowInput();
+            }
         }
     }
 
     // Left Click Interaction
-    private void LightAttackInput()
+    private void ShootInput()
     {
         LightAttackServerRPC();
     }
@@ -145,7 +198,7 @@ public class PlayerController2D : NetworkBehaviour
     public void LightAttackServerRPC()
     {
         NetworkObject netObj = NetworkObjectPool.Singleton.GetNetworkObject(_leftClickProjectilePrefab);
-        netObj.GetComponent<AProjectile>().SetTransform(_weaponProjectileSpot);
+        netObj.GetComponent<AProjectile>().SetTransform(_weaponProjectileSpot.transform);
 
         if (!netObj.IsSpawned)
         {
@@ -154,69 +207,13 @@ public class PlayerController2D : NetworkBehaviour
     }
 
     //  Right Click Interaction
-    private void PickupNearestThrowableInput()
-    {
-
-        if (_nearbyThrowables.Count > 0)
-        {
-            IThrowable throwable = _nearbyThrowables[0];
-            if(throwable != null)
-            {
-                Vector3 throwDir = HM.PolarToVector(180 + _cursorData.Value.DirectionalCursorRotation.z);
-                //Vector3 throwDir = HM.PolarToVector(180 + HM.GetAngle2DBetween(transform.position, Camera.main.ScreenToWorldPoint(Input.mousePosition))).normalized;
-                throwable.Throw(throwDir);
-                Debug.Log(throwDir);
-
-                // choose nearest throwable
-                /*foreach(IThrowable throwable in _nearbyThrowables)
-                {
-
-                }*/
-                //_nearbyThrowables.Remove(_nearbyThrowables[0]);
-                //Debug.Log("Throwing!");
-            }
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D collision)
-    {
-        if (collision.TryGetComponent(out IThrowable throwable))
-        {
-            if (!_nearbyThrowables.Contains(throwable))
-            {
-                _nearbyThrowables.Add(throwable);
-               // Debug.Log(throwable + " entered.");
-            }
-        }
-    }
-    private void OnTriggerExit2D(Collider2D collision)
-    {
-        if (collision.TryGetComponent(out IThrowable throwable))
-        {
-            if (_nearbyThrowables.Contains(throwable))
-            {
-                _nearbyThrowables.Remove(throwable);
-               // Debug.Log(throwable + " exited.");
-            }
-        }
-    }
+    
     //  Keyboard and Mouse
     private void HandleMousePos()
     {
         _controllerCrosshair.gameObject.SetActive(false);
         Cursor.visible = true;
-        HM.RotateLocalTransformToAngle(_armTransform, new Vector3(0, 0, HM.GetAngle2DBetween(Camera.main.WorldToScreenPoint(transform.position), Input.mousePosition)));
-    }
-
-    private void HandleMovement()
-    {
-        moveVector = horizontalInput * maxSpeed * Vector3.right + verticalInput * maxSpeed * Vector3.up;
-        currentSpeed = Vector3.Magnitude(moveVector);
-        _playerRB.MovePosition(transform.position + moveVector);
-
-        _playerAnim.SetFloat(_speedParameter, currentSpeed);
-        _playerAnim.SetFloat(_horizontalParameter, horizontalInput);
-        _playerAnim.SetFloat(_verticalParameter, verticalInput);
+        HM.RotateLocalTransformToAngle(_armTransform.transform, new Vector3(0, 0, HM.GetAngle2DBetween(Camera.main.WorldToScreenPoint(transform.position), Input.mousePosition)));
     }
 
     //  Controller
@@ -224,10 +221,80 @@ public class PlayerController2D : NetworkBehaviour
     {
         _controllerCrosshair.gameObject.SetActive(show);
         _controllerCrosshair.transform.localPosition = vec * 2;
-        HM.RotateLocalTransformToAngle(_armTransform, new Vector3(0, 0, HM.GetAngle2DBetween(Vector3.zero, vec)));
+        HM.RotateLocalTransformToAngle(_armTransform.transform, new Vector3(0, 0, HM.GetAngle2DBetween(Vector3.zero, vec)));
         Cursor.visible = false;
     }
 
+    //  Throwables
+    private void PickUpInput()
+    {
+        PickupNearestThrowableServerRpc();
+    }
+    private void ThrowInput()
+    {
+        ThrowNearestThrowableServerRpc();
+    }
+
+    [ServerRpc]
+    public void PickupNearestThrowableServerRpc()
+    {
+        if (_nearbyThrowables.Count > 0)
+        {
+            AThrowable throwable = _nearbyThrowables[0];
+            float minDistance = Mathf.Infinity;
+
+            //  Select the closest throwable
+            foreach (AThrowable t in _nearbyThrowables)
+            {
+                float distance = Vector3.Distance(transform.position, t.transform.position);
+                if (distance < minDistance)
+                {
+                    throwable = t;
+                    minDistance = distance;
+                }
+                _currentThrowable = throwable;
+            }
+            _currentThrowable.PickUp(_weaponProjectileSpot, true);
+            _currentThrowable.transform.SetParent(transform, false);
+            _combatState = CombatState.ThrowableInHand;
+        }
+    }
+
+    [ServerRpc]
+    public void ThrowNearestThrowableServerRpc()
+    {
+        _currentThrowable.transform.SetParent(null);
+        _currentThrowable.PickUp(null, false);
+        if (_currentThrowable != null)
+        {
+            Vector3 throwDir = HM.PolarToVector(180 + _cursorData.Value.DirectionalCursorRotation.z);
+            _currentThrowable.Throw(throwDir);
+        }
+        _currentThrowable = null;
+        _combatState = CombatState.Default;
+    }
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.TryGetComponent(out AThrowable throwable))
+        {
+            if (!_nearbyThrowables.Contains(throwable))
+            {
+                _nearbyThrowables.Add(throwable);
+                // Debug.Log(throwable + " entered.");
+            }
+        }
+    }
+    private void OnTriggerExit2D(Collider2D collision)
+    {
+        if (collision.TryGetComponent(out AThrowable throwable))
+        {
+            if (_nearbyThrowables.Contains(throwable))
+            {
+                _nearbyThrowables.Remove(throwable);
+                // Debug.Log(throwable + " exited.");
+            }
+        }
+    }
     //  Network Stuff
 
     public override void OnNetworkSpawn()
@@ -257,6 +324,10 @@ public class PlayerController2D : NetworkBehaviour
         _pUI.enabled = false;
     }
 
+
+    //  NETWORK STRUCTS
+
+
     struct DirectionCursorData : INetworkSerializable
     {
         private float _directionCursorRotation;
@@ -271,4 +342,49 @@ public class PlayerController2D : NetworkBehaviour
             serializer.SerializeValue(ref _directionCursorRotation);
         }
     }
+    struct PlayerMovementData : INetworkSerializable
+    {
+        private float _xPosition;
+        private float _yPosition;
+        private float _horizontalValue;
+        private float _verticalValue;
+
+        private float _zrot;
+
+        internal Vector3 Position
+        {
+            get => new Vector3(_xPosition, _yPosition, 0);
+            set
+            {
+                _xPosition = value.x;
+                _yPosition = value.y;
+            }
+        }
+
+        internal Vector3 Rotation
+        {
+            get => new Vector3(0, 0, _zrot);
+            set => _zrot = value.z;
+        }
+        internal float XDir
+        {
+            get => _horizontalValue;
+            set => _horizontalValue = value;
+        }
+        internal float YDir
+        {
+            get => _verticalValue;
+            set => _verticalValue = value;
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref _xPosition);
+            serializer.SerializeValue(ref _yPosition);
+            serializer.SerializeValue(ref _horizontalValue);
+            serializer.SerializeValue(ref _verticalValue);
+            serializer.SerializeValue(ref _zrot);
+        }
+    }
+
 }

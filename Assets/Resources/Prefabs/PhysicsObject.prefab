@@ -111,7 +111,7 @@ MonoBehaviour:
   - {x: 0.31, y: -0.31, z: 0}
   m_ShapePathHash: 1270930277
   m_Mesh: {fileID: 0}
-  m_InstanceId: -149370
+  m_InstanceId: -1300
   m_LocalBounds:
     m_Center: {x: -0.030000001, y: 0, z: 0}
     m_Extent: {x: 0.34, y: 0.31, z: 0}
@@ -165,9 +165,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3f50bee980984044a8565aa6267d336, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _punchForce: 10
   _throwForce: 1000
   _pickedUp: 0
+  _punchForce: 10
 --- !u!114 &5078240151691015963
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -182,12 +182,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   SyncPositionX: 1
   SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
+  SyncPositionZ: 0
+  SyncRotAngleX: 0
+  SyncRotAngleY: 0
   SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
+  SyncScaleX: 0
+  SyncScaleY: 0
   SyncScaleZ: 1
   PositionThreshold: 0.001
   RotAngleThreshold: 0.01

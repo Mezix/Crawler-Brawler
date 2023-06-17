@@ -43,7 +43,6 @@ GameObject:
   - component: {fileID: 373160353568161621}
   - component: {fileID: 28808615028159539}
   - component: {fileID: 373160353065058472}
-  - component: {fileID: 4954946628045757936}
   - component: {fileID: 2397862306790972166}
   - component: {fileID: 8645661856001703053}
   - component: {fileID: 8991873185204742040}
@@ -94,10 +93,14 @@ MonoBehaviour:
   _playerAnim: {fileID: 0}
   _armTransform: {fileID: 6801372531249337188}
   _weaponProjectileSpot: {fileID: 2348115072987425744}
+  _nearbyThrowables: []
+  _currentThrowable: {fileID: 0}
+  _combatState: 0
   _controllerOn: 0
   _pUI: {fileID: 6300568427257177323}
   _controllerCrosshair: {fileID: 7173172151592123353}
   _leftClickProjectilePrefab: {fileID: 0}
+  cheapInterpolationTime: 0.1
 --- !u!114 &373160353065058472
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -114,19 +117,6 @@ MonoBehaviour:
   AlwaysReplicateAsRoot: 0
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
---- !u!114 &4954946628045757936
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 373160353568161620}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f301d4b7456ba9f4e875f8fb0451c5a5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  cheapInterpolationTime: 0.1
 --- !u!50 &2397862306790972166
 Rigidbody2D:
   serializedVersion: 4
@@ -864,6 +854,7 @@ GameObject:
   - component: {fileID: 5866453833348116699}
   - component: {fileID: 6194322609771685777}
   - component: {fileID: 7425737540565282244}
+  - component: {fileID: 5512341133076445702}
   m_Layer: 0
   m_Name: PlayerModelTemp
   m_TagString: Untagged
@@ -973,6 +964,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   TransitionStateInfoList: []
   m_Animator: {fileID: 6194322609771685777}
+--- !u!114 &5512341133076445702
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2346971039058011127}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: df2868252ab5c4d1da357e8f11f1b524, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  InLocalSpace: 0
+  Interpolate: 1
 --- !u!1 &3060402282510324673
 GameObject:
   m_ObjectHideFlags: 0
@@ -1243,7 +1260,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &273377627576950928
 Transform:
   m_ObjectHideFlags: 0
