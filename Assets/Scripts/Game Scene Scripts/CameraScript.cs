@@ -37,7 +37,7 @@ public class CameraScript : MonoBehaviour
     public void SetObjectToTrack(Transform obj)
     {
         objToTrack = obj;
-        transform.SetParent(objToTrack);
+        //transform.SetParent(objToTrack);
         isMovingToPos = true;
     }
     private void MoveCameraToLocalPos()

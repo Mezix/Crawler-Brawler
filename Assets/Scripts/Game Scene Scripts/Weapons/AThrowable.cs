@@ -1,23 +1,21 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
 
-public abstract class AThrowable : MonoBehaviour
+public abstract class AThrowable : NetworkBehaviour
 {
     protected Rigidbody2D rb;
     protected Collider2D col;
     protected NetworkObject _netObj;
     public float _throwForce;
     public NetworkTransform _networkTransform;
-
-    //public bool _pickedUp; //TODO: network variable
-    //public NetworkVariable<bool> _pickedUp = new NetworkVariable<bool>(false);
-
-    private NetworkVariable<PackageData> _packageData = new NetworkVariable<PackageData>(writePerm: NetworkVariableWritePermission.Owner);
-
     public Transform _parentToTrack;
+
+    //  Network Stuff
+    private NetworkVariable<PackageData> _packageData = new NetworkVariable<PackageData>(writePerm: NetworkVariableWritePermission.Owner);
 
     public virtual void Awake()
     {
@@ -26,21 +24,31 @@ public abstract class AThrowable : MonoBehaviour
         _netObj = GetComponentInChildren<NetworkObject>();
         _networkTransform = GetComponentInChildren<NetworkTransform>();
     }
-    private void Update()
+    private void Start()
     {
-        if(_packageData.Value.PackagePickedUp)
+        //_packageData.Value = new PackageData() { PackagePickedUp = false };
+    }
+    public virtual void Update()
+    {
+        PickedUpBehaviour();
+    }
+
+    private void PickedUpBehaviour()
+    {
+        if (_packageData.Value.PackagePickedUp)
         {
-            _networkTransform.enabled = false;
-            col.isTrigger = true;
+            //_networkTransform.enabled = false;
+            //col.isTrigger = true;
             transform.position = _parentToTrack.position;
             HM.RotateTransformToAngle(transform, _parentToTrack.rotation.eulerAngles);
         }
         else
         {
-            _networkTransform.enabled = true;
-            col.isTrigger = false;
+            //_networkTransform.enabled = true;
+            //col.isTrigger = false;
         }
     }
+
     public void PickUp(Transform t, bool pickedUp)
     {
         _packageData.Value = new PackageData() { PackagePickedUp = pickedUp };

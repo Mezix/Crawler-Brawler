@@ -6,17 +6,21 @@ using UnityEngine.UI;
 
 public class PlayerUI : MonoBehaviour
 {
+    [Header("Top Level Settings")]
     public GameObject _menuParent;
     public bool _menuOn;
 
-    [Header("Damage Indicators")]
     public Button _returnToMainMenuButton;
-    public Button _settingsButton;
+    public Button _openSettingsButton;
     public Button _quitGameButton;
 
     [Header("Settings")]
-    public bool _settingsOn;
     public GameObject _settingsParent;
+    public bool _settingsOn;
+
+    public Button _keyboardModeButton;
+    public Button _controllerModeButton;
+    public Button _closeSettingsButton;
 
     private void Awake()
     {
@@ -25,14 +29,21 @@ public class PlayerUI : MonoBehaviour
 
     private void InitButtons()
     {
+        //  Top Level Menu
         _returnToMainMenuButton.onClick.AddListener(() => ReturnToMainMenu());
         _quitGameButton.onClick.AddListener(() => QuitGame());
+        _openSettingsButton.onClick.AddListener(() => TurnOnSettings(true));
+
+        //  Settings Menu
+        _closeSettingsButton.onClick.AddListener(() => TurnOnSettings(false));
+        _controllerModeButton.onClick.AddListener(() => ControllerMode(true));
+        _keyboardModeButton.onClick.AddListener(() => ControllerMode(false));
     }
 
     private void Start()
     {
         _menuOn = false;
-        MenuOn(_menuOn);
+        TurnOnMenu(_menuOn);
     }
     private void Update()
     {
@@ -40,14 +51,18 @@ public class PlayerUI : MonoBehaviour
         {
             Cursor.visible = true;
             _menuOn = !_menuOn;
-            MenuOn(_menuOn);
+            TurnOnMenu(_menuOn);
         }
     }
-    public void MenuOn(bool on)
+    //  Top Level UI
+    public void TurnOnMenu(bool on)
     {
         _menuParent.SetActive(on);
+        if(!on)
+        {
+            TurnOnSettings(false);
+        }
     }
-
     private void ReturnToMainMenu()
     {
         Loader.Load(Loader.Scene.MenuScene);
@@ -55,5 +70,16 @@ public class PlayerUI : MonoBehaviour
     private void QuitGame()
     {
         Application.Quit();
+    }
+
+    //  Settings
+    public void TurnOnSettings(bool on)
+    {
+        _settingsOn = on;
+        _settingsParent.SetActive(on);
+    }
+    public void ControllerMode(bool controllerOn)
+    {
+        REF.PCon._controllerOn = controllerOn;
     }
 }

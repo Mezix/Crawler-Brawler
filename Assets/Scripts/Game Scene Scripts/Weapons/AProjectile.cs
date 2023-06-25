@@ -13,13 +13,12 @@ public abstract class AProjectile : NetworkBehaviour
     public bool HitPlayer { get; set; }
 
     public bool HasDoneDamage { get; set; }
-    [HideInInspector] public bool _despawnAnimationPlaying;
+    private bool _despawnAnimationPlaying;
 
-    [HideInInspector] public Rigidbody2D _projectileRB;
-    [HideInInspector] public Collider2D _projectileCollider;
-    [HideInInspector] public TrailRenderer _trailRenderer;
-
-    public GameObject _projectilePrefabReference;
+    private Rigidbody2D _projectileRB;
+    private Collider2D _projectileCollider;
+    private TrailRenderer _trailRenderer;
+    //private GameObject _projectilePrefabReference;
 
     public virtual void Awake()
     {
@@ -28,7 +27,7 @@ public abstract class AProjectile : NetworkBehaviour
         _projectileCollider = GetComponentInChildren<Collider2D>();
         _trailRenderer = GetComponentInChildren<TrailRenderer>();
         MaxLifetime = 3;
-        _projectilePrefabReference = Resources.Load(GS.Prefabs("Projectile"), typeof(GameObject)) as GameObject;
+        //_projectilePrefabReference = Resources.Load(GS.Prefabs("Projectile"), typeof(GameObject)) as GameObject;
     }
 
     public void Update()
@@ -71,7 +70,10 @@ public abstract class AProjectile : NetworkBehaviour
         HitPlayer = false;
         if (!HitPlayer)
         {
-            Physics2D.IgnoreCollision(_projectileCollider, REF.PCon._playerCol);
+            foreach(Collider2D col in REF.PCon.GetComponentsInChildren<Collider2D>())
+            {
+                Physics2D.IgnoreCollision(_projectileCollider, col);
+            }
         }
         if (_trailRenderer) _trailRenderer.Clear();
     }
